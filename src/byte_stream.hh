@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <deque>
 
 class Reader;
 class Writer;
@@ -11,18 +12,23 @@ class ByteStream
 {
 public:
   explicit ByteStream( uint64_t capacity );
-
+  bool input_end = false; // 观察是否到达了输入的末尾
   // Helper functions (provided) to access the ByteStream's Reader and Writer interfaces
   Reader& reader();
   const Reader& reader() const;
   Writer& writer();
   const Writer& writer() const;
+  uint64_t number_pushed = 0; // 记录已经push的字节数
+  uint64_t number_popped = 0; // 记录已经pop的字节数
+  std::deque<char> buffer;
+  //在Bytestream类力定义一个缓冲区 buffer
 
   void set_error() { error_ = true; };       // Signal that the stream suffered an error.
   bool has_error() const { return error_; }; // Has the stream had an error?
 
 protected:
   // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
+
   uint64_t capacity_;
   bool error_ {};
 };
@@ -42,7 +48,8 @@ class Reader : public ByteStream
 {
 public:
   std::string_view peek() const; // Peek at the next bytes in the buffer
-  void pop( uint64_t len );      // Remove `len` bytes from the buffer
+  void pop( uint64_t len );
+     // Remove `len` bytes from the buffer
 
   bool is_finished() const;        // Is the stream finished (closed and fully popped)?
   uint64_t bytes_buffered() const; // Number of bytes currently buffered (pushed and not popped)
@@ -54,3 +61,4 @@ public:
  * from a ByteStream Reader into a string;
  */
 void read( Reader& reader, uint64_t max_len, std::string& out );
+
